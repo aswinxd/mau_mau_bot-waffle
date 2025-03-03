@@ -1,23 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
-# Telegram bot to play UNO in group chats
-# Copyright (c) 2016 Jannes Höke <uno@jhoeke.de>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-
 import gettext
 from functools import wraps
 
@@ -33,16 +13,19 @@ GETTEXT_DIR = 'locales'
 class _Underscore(object):
     """Class to emulate flufl.i18n behaviour, but with plural support"""
     def __init__(self):
-        self.translators = {
-            locale: gettext.GNUTranslations(
-                open(gettext.find(
-                    GETTEXT_DOMAIN, GETTEXT_DIR, languages=[locale]
-                ), 'rb')
-            )
-            for locale
-            in available_locales.keys()
-            if locale != 'en_US'  # No translation file for en_US
-        }
+        self.translators = {}
+        for locale in available_locales.keys():
+            if locale == 'en_US':
+                continue  # No translation file for en_US
+
+            mo_path = gettext.find(GETTEXT_DOMAIN, GETTEXT_DIR, languages=[locale])
+            if mo_path is None:
+                print(f"Warning: Translation file for locale '{locale}' not found.")
+                continue
+
+            with open(mo_path, 'rb') as mo_file:
+                self.translators[locale] = gettext.GNUTranslations(mo_file)
+
         self.locale_stack = list()
 
     def push(self, locale):
@@ -158,3 +141,4 @@ def _user_chat_from_update(update):
         chat = gm.userid_current.get(user.id).game.chat
 
     return user, chat
+
